@@ -2,6 +2,7 @@ package com.electronic.store.config;
 
 import  com.electronic.store.security.JwtAuthenticationEntryPoint;
 import com.electronic.store.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +24,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+
+import java.util.List;
 
 
 @Configuration
@@ -66,9 +69,22 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        //http.cors(cors-> cors.configurationSource(corsConfigurationSource()));
 
-        //http.cors(cors-> cors.configurationSource(corsFilter()));
+        http.cors(httpSecurityCorsConfigurer ->
+                httpSecurityCorsConfigurer.configurationSource(new CorsConfigurationSource() {
+                    @Override
+                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                        CorsConfiguration configuration = new CorsConfiguration();
+//                      configuration.setAllowedOrigins(Arrays.asList("https://domain2.com","http://localhost:4200"));
+                        configuration.setAllowedOriginPatterns(List.of("*"));
+                        configuration.setAllowedHeaders(List.of("*"));
+                        configuration.setAllowedMethods(List.of("*"));
+                        configuration.setAllowCredentials(true);
+                        configuration.setMaxAge(3600L);
+                        return configuration;
+                    }
+                })
+        );
 
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth-> auth
@@ -89,45 +105,4 @@ public class SecurityConfig {
         return http.build();
     }
 
-
-    /*@Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
-        configuration.addAllowedHeader("Authorization");
-        configuration.addAllowedHeader("Content-Type");
-        configuration.addAllowedHeader("Accept");
-        configuration.setAllowedMethods(Arrays.asList("GET","POST","DELETE","PUT","OPTIONS"));
-        configuration.setMaxAge(3600L);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-*/
-    //CORS - Configuration
-    @Bean
-    public CorsConfigurationSource corsFilter() {
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowCredentials(true);
-//        configuration.setAllowedOrigins(Arrays.asList("https://domain2.com","http://localhost:4200"));
-        configuration.addAllowedOriginPattern("*");
-        configuration.addAllowedHeader("Authorization");
-        configuration.addAllowedHeader("Content-Type");
-        configuration.addAllowedHeader("Accept");
-        configuration.addAllowedMethod("GET");
-        configuration.addAllowedMethod("POST");
-        configuration.addAllowedMethod("DELETE");
-        configuration.addAllowedMethod("PUT");
-        configuration.addAllowedMethod("OPTIONS");
-        configuration.setMaxAge(3600L);
-        source.registerCorsConfiguration("/**", configuration);
-
-        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(new CorsFilter(source));
-        filterRegistrationBean.setOrder(-110);
-        return source;
-
-
-    }
 }
